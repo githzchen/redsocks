@@ -14,7 +14,7 @@ SRCS := $(OBJS:.o=.c)
 CONF := config.h
 DEPS := .depend
 OUT := redsocks2
-VERSION := 0.68
+VERSION := 0.71
 OS := $(shell uname)
 
 LIBS := -levent
@@ -24,6 +24,9 @@ override CFLAGS += -std=c99 -D_XOPEN_SOURCE=600
 endif
 ifeq ($(OS), FreeBSD)
 override CFLAGS +=-I/usr/local/include -L/usr/local//lib
+endif
+ifeq ($(OS), OpenBSD)
+override CFLAGS +=-I/usr/local/include -L/usr/local//lib #same as FreeBSD
 endif
 ifeq ($(OS), Darwin)
 override CFLAGS +=-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib
@@ -52,7 +55,10 @@ override CFLAGS += -DENABLE_HTTPS_PROXY
 override FEATURES += ENABLE_HTTPS_PROXY
 $(info Compile with HTTPS proxy enabled.)
 endif
-override LIBS += -lssl -lcrypto -ldl
+override LIBS += -lssl -lcrypto
+ifneq ($(OS), OpenBSD)
+override LIBS += -ldl
+endif
 override CFLAGS += -DUSE_CRYPTO_OPENSSL
 endif
 ifdef ENABLE_STATIC
@@ -79,6 +85,9 @@ $(CONF):
 	OpenBSD) \
 		echo "#define USE_PF" >$(CONF) \
 		;; \
+	NetBSD) \
+                echo "#define USE_PF" >$(CONF) \
+                ;; \
 	Darwin) \
 		echo -e "#define USE_PF\n#define _APPLE_" >$(CONF) \
 		;; \
